@@ -1,7 +1,11 @@
 ﻿using Dapper;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Data.SqlClient;
+using Microsoft.IdentityModel.Tokens;
 using SM_ProyectoApi.Models;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Text;
 
 namespace SM_ProyectoApi.Controllers
 {
@@ -54,6 +58,8 @@ namespace SM_ProyectoApi.Controllers
 
                 if (result != null)
                 {
+                    result.Token = GenerarToken(result.Id);
+
                     respuesta.Indicador = true;
                     respuesta.Mensaje = "Su información se ha validado correctamente";
                     respuesta.Datos = result;
@@ -66,6 +72,24 @@ namespace SM_ProyectoApi.Controllers
 
                 return Ok(respuesta);
             }         
+        }
+
+        private string GenerarToken(long Id)
+        {
+            string SecretKey = _configuration.GetSection("Variables:llaveToken").Value!;
+
+            List<Claim> claims = new List<Claim>();
+            claims.Add(new Claim("IdUsuario", Id.ToString()));
+
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(SecretKey));
+            var cred = new SigningCredentials(key, SecurityAlgorithms.HmacSha256Signature);
+
+            var token = new JwtSecurityToken(
+                claims: claims,
+                expires: DateTime.UtcNow.AddMinutes(20),
+                signingCredentials: cred);
+
+            return new JwtSecurityTokenHandler().WriteToken(token);
         }
 
     }
