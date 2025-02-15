@@ -1,6 +1,4 @@
 ﻿using Dapper;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Data.SqlClient;
 using SM_ProyectoApi.Models;
@@ -25,9 +23,22 @@ namespace SM_ProyectoApi.Controllers
             {
                 var result = context.Execute("RegistrarCuenta", 
                     new { model.Identificacion, model.Contrasenna, model.Nombre, model.Correo });
-            }
 
-            return Ok();
+                var respuesta = new RespuestaModel();
+
+                if (result > 0)
+                {
+                    respuesta.Indicador = true;
+                    respuesta.Mensaje = "Su información se ha registrado correctamente";
+                }
+                else
+                {
+                    respuesta.Indicador = false;
+                    respuesta.Mensaje = "Su información no ha registrado correctamente";
+                }
+
+                return Ok(respuesta);
+            }            
         }
 
         [HttpPost]
@@ -39,8 +50,22 @@ namespace SM_ProyectoApi.Controllers
                 var result = context.QueryFirstOrDefault<UsuarioModel>("IniciarSesion",
                     new { model.Identificacion, model.Contrasenna });
 
-                return Ok(result);
-            }           
+                var respuesta = new RespuestaModel();
+
+                if (result != null)
+                {
+                    respuesta.Indicador = true;
+                    respuesta.Mensaje = "Su información se ha validado correctamente";
+                    respuesta.Datos = result;
+                }
+                else
+                {
+                    respuesta.Indicador = false;
+                    respuesta.Mensaje = "Su información no se ha validado correctamente";
+                }
+
+                return Ok(respuesta);
+            }         
         }
 
     }
