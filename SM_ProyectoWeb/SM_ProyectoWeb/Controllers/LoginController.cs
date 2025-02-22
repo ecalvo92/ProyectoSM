@@ -2,6 +2,7 @@
 using SM_ProyectoWeb.Models;
 using System.Security.Cryptography;
 using System.Text;
+using System.Text.Json;
 
 namespace SM_ProyectoWeb.Controllers
 {
@@ -60,11 +61,17 @@ namespace SM_ProyectoWeb.Controllers
             using (var api = _httpClient.CreateClient())
             {
                 var url = _configuration.GetSection("Variables:urlApi").Value + "Login/IniciarSesion";
-                var result = api.PostAsJsonAsync(url, model).Result;
+                var response = api.PostAsJsonAsync(url, model).Result;
 
-                if (result.IsSuccessStatusCode)
+                if (response.IsSuccessStatusCode)
                 {
-                    return RedirectToAction("Principal", "Login");
+                    var result = response.Content.ReadFromJsonAsync<RespuestaModel>().Result;
+
+                    if (result != null && result.Indicador)
+                    {
+                        var datosResult = JsonSerializer.Deserialize<UsuarioModel>((JsonElement)result.Datos!);
+                        return RedirectToAction("Principal", "Login");
+                    }                    
                 }
             }
 
